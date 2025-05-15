@@ -1,14 +1,14 @@
+import * as Location from "expo-location";
+import LottieView from "lottie-react-native";
 import React, { useEffect, useState } from "react";
 import {
+  Platform,
+  ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
-  ScrollView,
-  StatusBar,
-  Platform,
 } from "react-native";
-import * as Location from "expo-location";
-import LottieView from "lottie-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 interface WeatherData {
@@ -23,6 +23,7 @@ interface WeatherData {
     all: number;
   };
   weather: {
+    main: string;
     description: string;
   }[];
 }
@@ -93,6 +94,13 @@ export default function App() {
     }
   };
 
+  const getWeatherAnimation = (main: string) => {
+    if (main.includes("Thunder")) return require("../assets/cloudy.json");
+    if (main.includes("Rain")) return require("../assets/3.json");
+    if (main.includes("Cloud")) return require("../assets/cloudy.json");
+    return require("../assets/sunny.json");
+  };
+
   useEffect(() => {
     getLocation();
   }, []);
@@ -121,7 +129,7 @@ export default function App() {
         </View>
 
         <LottieView
-          source={require("../assets/thunder.json")}
+          source={getWeatherAnimation(weather.weather[0]?.main)}
           autoPlay
           loop
           style={styles.lottie}
@@ -156,11 +164,16 @@ export default function App() {
           {forecast.map((item, i) => {
             const hour = new Date(item.dt * 1000).getHours();
             const temp = Math.round(item.main.temp);
-            const icon = item.weather[0].main.includes("Rain")
-              ? "🌧️"
-              : item.weather[0].main.includes("Cloud")
-              ? "☁️"
-              : "☀️";
+            const weather = item.weather[0].main;
+
+            let animation;
+            if (weather.includes("Rain")) {
+              animation = require("../assets/3.json");
+            } else if (weather.includes("Cloud")) {
+              animation = require("../assets/cloudy.json");
+            } else {
+              animation = require("../assets/sunny.json");
+            }
 
             return (
               <View
@@ -169,7 +182,12 @@ export default function App() {
               >
                 <Text style={styles.hourTime}>{`${hour}:00`}</Text>
                 <Text style={styles.hourTemp}>{temp}°</Text>
-                <Text style={styles.hourIcon}>{icon}</Text>
+                <LottieView
+                  source={animation}
+                  autoPlay
+                  loop
+                  style={{ width: 50, height: 50 }}
+                />
               </View>
             );
           })}
